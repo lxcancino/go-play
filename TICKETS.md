@@ -6,8 +6,33 @@ Statuses: `To Do`, `In Progress`, `In Review`, `Done`.
 
 | Key | Type | Summary | Status |
 |-----|------|---------|--------|
+| GP-4 | feat | Design and build Axioma Account and Auth service (spec-driven) | To Do |
+| GP-3 | docs | Draft Axioma Account Service foundations and open questions | Done |
 | GP-2 | chore | Close GP-1 in the ticket log | Done |
 | GP-1 | docs | Define branching, linear-history and PR workflow | Done |
+
+## GP-4: Design and build Axioma Account and Auth service
+
+- **Tier:** spec-driven (GitHub Spec Kit)
+- **Description:** Resolve the open questions in `docs/domain/axioma-account-service.md`, then specify,
+  plan and implement the Account Service (customers, accounts, tenants) together with the Auth
+  Service (users, tokens, roles) as one Go codebase with a logical separation. First real project
+  (Go, Fiber, PostgreSQL in Docker).
+- **Start of the new session:**
+  - Read `docs/domain/axioma-account-service.md`, `CLAUDE.md` and this file.
+  - Check how Spec Kit branch naming and `specs/` layout fit our branch and ticket rules.
+  - Walk through the open questions and record decisions.
+
+## GP-3: Draft Axioma Account Service foundations and open questions
+
+- **Branch:** `docs/GP-3-axioma-account-foundations`
+- **Description:** Capture the core concepts (Customer, Subscription, AxiomaAccount, Tenant, User,
+  SuperUser), a draft relationship model, and the open questions for the next ticket. No design
+  decisions yet.
+- **Acceptance criteria:**
+  - Concepts and a draft relationship model documented in `docs/domain/axioma-account-service.md`.
+  - Open questions listed and grouped.
+  - Follow-up ticket GP-4 created.
 
 ## GP-2: Close GP-1 in the ticket log
 

@@ -52,3 +52,48 @@ Always use the Conventional Commits pattern for commit messages:
 - Never commit without showing the changes and the proposed message first, and asking.
 
 These mirror the global rules in `~/.claude-personal/CLAUDE.md`.
+
+## Workflow (mandatory)
+
+We work as in a Jira-driven team. Every change starts from a ticket. These rules are mandatory;
+if a request conflicts with them, say so and ask before proceeding.
+
+### Tickets
+
+- Tickets use the key `GP-<n>` (sequential) and are logged in `TICKETS.md` (a stand-in for Jira).
+- Create or update the ticket in `TICKETS.md` before starting work. Never work without a ticket.
+- Ticket numbers go in branch names, PR titles and `TICKETS.md`, never in commit messages.
+
+### Branches
+
+- Never commit directly to `main`. Branch from an up-to-date `main`; one ticket = one branch = one PR.
+- Naming: `<type>/GP-<n>-<short-kebab-description>`, e.g. `feat/GP-12-customer-crud-endpoints`.
+- `<type>` uses the same list as Conventional Commits. Description is lowercase kebab-case, ~5 words max.
+- Only one slash in the name.
+
+### Linear history (no merge commits, ever)
+
+- Keep branches current by rebasing onto `main` (`git fetch && git rebase origin/main`), never by
+  merging `main` into the branch. `git pull` is configured to rebase.
+- Never create merge commits. Do not use `git merge` (except fast-forward) or the "Create a merge commit"
+  button.
+- After a rebase, push with `git push --force-with-lease` (never plain `--force`), and only on your own
+  ticket branch, never on `main`.
+
+### Pull requests
+
+- Every branch is merged through a PR into `main`, and only by squash merge
+  (`gh pr merge --squash --delete-branch`).
+- PR title is a Conventional Commit (`<type>: <short description>`) because it becomes the squashed
+  commit on `main`. Put the ticket key (`GP-<n>`) in the PR body.
+- The PR body becomes the squashed commit body, so end it with the `Co-Authored-By` trailer for Claude.
+- Delete the branch after merging.
+- Commits still require the user's approval (see Git above). Once committed, ticket branches may be
+  pushed and PRs opened without asking.
+- Always ask the user before merging a PR into `main`.
+
+### GitHub enforcement
+
+The repo settings back these rules up: squash merge only, branches deleted on merge, and `main` is
+protected (PR required, linear history, no force pushes or deletions, enforced for admins).
+If a push or merge is rejected by these rules, do not work around them; fix the workflow.

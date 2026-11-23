@@ -1,0 +1,43 @@
+version: "3"
+
+# Runs a command in every Go module found in the repo (each project has its own go.mod).
+# Go has no built-in "all modules in go.work" command, so we loop over them.
+vars:
+  MODULES:
+    sh: find . -name go.mod -not -path '*/node_modules/*' -exec dirname {} \; | sort
+
+tasks:
+  default:
+    desc: List available tasks
+    cmds:
+      - task --list
+    silent: true
+
+  fmt:
+    desc: Format all modules
+    cmds:
+      - for: { var: MODULES }
+        cmd: cd {{.ITEM}} && go fmt ./...
+
+  vet:
+    desc: Run go vet on all modules
+    cmds:
+      - for: { var: MODULES }
+        cmd: cd {{.ITEM}} && go vet ./...
+
+  test:
+    desc: Run tests on all modules
+    cmds:
+      - for: { var: MODULES }
+        cmd: cd {{.ITEM}} && go test ./...
+
+  tidy:
+    desc: Run go mod tidy on all modules
+    cmds:
+      - for: { var: MODULES }
+        cmd: cd {{.ITEM}} && go mod tidy
+
+  sync:
+    desc: Sync go.work with the modules found in the repo
+    cmds:
+      - go work sync

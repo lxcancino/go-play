@@ -1,8 +1,8 @@
 # Axioma Life: Account Service (draft foundations)
 
-> Status: **DRAFT**. Nothing here is decided. Everything marked "Proposed" is a starting point to be
-> challenged in the next ticket (GP-4). Axioma Life is fictitious; its purpose is to practice
-> multi-tenant SaaS patterns in Go.
+> Status: **DRAFT**. The object model is decided (GP-4, see "Decisions"). Everything marked
+> "Proposed" is still a starting point to be challenged in GP-4. Axioma Life is fictitious; its
+> purpose is to practice multi-tenant SaaS patterns in Go.
 
 ## Product context
 
@@ -13,37 +13,69 @@ This document covers only the foundation every other service depends on: who the
 how their organizations (tenants) are modelled, and who can do what. HR and payroll features come
 later.
 
+## Decisions (GP-4)
+
+Resolves Q3, Q4, Q5, Q6 and Q16 (added during GP-4) of the original draft.
+
+1. **Customer is merged into Account.** Account is the customer, the billing container and the
+   ownership boundary (billing info, plan, status). Split Customer out only if one buyer ever needs
+   several accounts (revisits Q5). Subscription/plan stays as fields on Account for now.
+2. **User is a global identity** (unique email), not owned by any tenant. Access is granted only through
+   **Membership** (user + scope + role), so one person can belong to several tenants (Q3).
+3. **Signup creates the Account only.** The first Tenant is a separate step.
+4. **SuperUser is dropped.** The **owner** is the root user who signs up (Q4). A platform operator
+   (Axioma staff) is a separate concern and out of scope for now.
+5. **An account admin manages all tenants of the account** without a membership in each (Q6).
+6. **Naming and persistence conventions** (Q16): plain names namespaced by Go package; plural
+   snake_case tables in per-module Postgres schemas.
+
 ## Core concepts
 
-| Concept | Draft meaning |
+| Concept | Meaning |
 |---|---|
-| **Customer** | The party that buys a subscription to Axioma Life (the commercial relationship). |
-| **Subscription** | What the customer buys: plan, limits, billing state. |
-| **AxiomaAccount** | The administrative and billing container created when a customer subscribes. Conceptually similar to an AWS Account: the boundary for ownership, billing and administration. |
-| **Tenant** | An isolated HR and payroll workspace; in the product, the employer (legal entity) whose employees are managed. The unit of data isolation. |
-| **User** | A person who authenticates. Belongs to tenant(s) and holds roles. |
-| **SuperUser** | A privileged user able to create the first tenant(s). Who exactly this is is an open question (see Q4). |
+| **Account** | Root entity: the customer, billing information, plan and status (`demo`, `active`, `suspended`). Similar to an AWS Account. |
+| **Tenant** | An isolated HR and payroll workspace (an employer). Belongs to exactly one Account. The unit of data isolation. |
+| **User** | A person who authenticates. Global identity keyed by unique email. |
+| **Membership** | User + scope (account or tenant) + role. The only place permissions are granted. |
+| **Credential** | The user's password hash, separate from User so other login methods can be added later. |
+| **RefreshToken** | A session that can be revoked (logout, revocation). |
+| **Invitation** | How the owner adds a user: an email invite carrying scope and role. The invitee sets their own password. |
+| **AuditEvent** | Who did what, per tenant. Optional at first (Q12). |
 
-Key idea: one **AxiomaAccount can administer several Tenants** (for example, a group of companies or
-an accounting firm managing several clients), and each Tenant acts as the HR and payroll owner.
+### Roles (static, defined in code at first)
 
-## Draft relationship model
+- **Account scope:** `owner` (the root user), `admin`, `billing`.
+- **Tenant scope:** `tenant_admin`, `hr_manager`, `viewer`.
+
+## Relationship model
 
 ```mermaid
 erDiagram
-    CUSTOMER ||--o{ SUBSCRIPTION : buys
-    SUBSCRIPTION ||--|| AXIOMA_ACCOUNT : "provisions (proposed)"
-    AXIOMA_ACCOUNT ||--o{ TENANT : administers
-    TENANT ||--o{ USER_MEMBERSHIP : has
-    USER ||--o{ USER_MEMBERSHIP : "belongs through"
+    ACCOUNT ||--o{ TENANT : owns
+    ACCOUNT ||--o{ MEMBERSHIP : has
+    TENANT ||--o{ MEMBERSHIP : has
+    USER ||--o{ MEMBERSHIP : holds
+    USER ||--o| CREDENTIAL : "authenticates with"
+    USER ||--o{ REFRESH_TOKEN : has
+    ACCOUNT ||--o{ INVITATION : issues
 ```
 
-`USER_MEMBERSHIP` (user + tenant + role) is only a proposal; it allows one person to belong to
-several tenants. Whether that is needed is Q3.
+A Membership points to either an Account or a Tenant, never both (exact schema is an implementation
+detail for the plan phase).
+
+## Onboarding workflow
+
+1. **Sign up** with email and password: creates the User, Credential, a `demo` Account and an `owner`
+   Membership at account scope.
+2. **Create a Tenant** (for example "Mi Empresa SA"). The owner administers it implicitly.
+3. **Invite a work user** by email with a tenant role (for example `hr_manager`). They accept and set a
+   password, which creates their User and a tenant-scoped Membership.
+4. **Log in.** After login the user picks a tenant if they have several; the tenant-scoped token carries
+   `account_id`, `tenant_id` and roles.
 
 ## Service boundary
 
-- **Account Service** (customers, subscriptions, accounts, tenants) and **Auth Service** (users,
+- **Account Service** (accounts, tenants, invitations) and **Auth Service** (users, memberships,
   credentials, tokens, roles) are closely related.
 - Proposed: **one codebase, one deployable (modular monolith)** with a clear logical separation
   (separate packages, no cross-imports of internals). Splitting later should be possible.
@@ -59,12 +91,14 @@ several tenants. Whether that is needed is Q3.
    a claim inside the token?
 
 ### B. Identity and relationships
-3. **Can a user belong to several tenants?** If so, is the user global (account-level identity) or
+Q3 to Q6 are **resolved** (see "Decisions"); the original wording is kept for context.
+
+3. [RESOLVED] **Can a user belong to several tenants?** If so, is the user global (account-level identity) or
    per tenant? Impacts login flow, "switch tenant", and the membership table.
-4. **Who is the SuperUser?** A platform operator (Axioma staff), the AxiomaAccount owner (customer
+4. [RESOLVED] **Who is the SuperUser?** A platform operator (Axioma staff), the AxiomaAccount owner (customer
    side), or both as different levels? Who creates the *first* tenant and how does onboarding work?
-5. **Customer vs Account cardinality:** is it 1:1, or can one customer hold several accounts?
-6. **Are users scoped to an account or a tenant?** For example, an account-level admin who manages
+5. [RESOLVED] **Customer vs Account cardinality:** is it 1:1, or can one customer hold several accounts?
+6. [RESOLVED] **Are users scoped to an account or a tenant?** For example, an account-level admin who manages
    all tenants without being a member of each.
 
 ### C. Authentication and authorization
@@ -86,6 +120,14 @@ several tenants. Whether that is needed is Q3.
     fiscal)? Or is that later HR-domain data?
 14. **IDs:** UUID (v7?) versus sequential; how they appear in URLs.
 15. **API style and framework:** REST with Fiber first (as planned); versioning; error format.
+16. [RESOLVED] **Naming and persistence conventions:** plain domain names or a product prefix
+    (`AxAccount`)? Decision: plain names in Go (`account.Account`, `tenant.Tenant`, `auth.User`),
+    namespaced by package, because a prefix stutters (`account.AxAccount`). Library collisions are
+    solved with import aliases. Database: plural snake_case tables (`users`, since `user` is a
+    reserved word in PostgreSQL), grouped in one Postgres schema per module (`account.*`, `auth.*`)
+    so the schema boundary mirrors the package boundary. No table prefixes (own database). Use
+    "Axioma Account" in prose when the term is ambiguous. Revisit only if aliasing cannot fix a
+    real collision.
 
 ## Process notes
 

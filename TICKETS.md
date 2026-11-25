@@ -6,13 +6,14 @@ Statuses: `To Do`, `In Progress`, `In Review`, `Done`.
 
 | Key | Type | Summary | Status |
 |-----|------|---------|--------|
-| GP-4 | feat | Design and build Axioma Account and Auth service (spec-driven) | To Do |
+| GP-4 | feat | Design and build Axioma Account and Auth service (spec-driven) | In Progress |
 | GP-3 | docs | Draft Axioma Account Service foundations and open questions | Done |
 | GP-2 | chore | Close GP-1 in the ticket log | Done |
 | GP-1 | docs | Define branching, linear-history and PR workflow | Done |
 
 ## GP-4: Design and build Axioma Account and Auth service
 
+- **Branch:** `feat/GP-4-account-auth-service`
 - **Tier:** spec-driven (GitHub Spec Kit)
 - **Description:** Resolve the open questions in `docs/domain/axioma-account-service.md`, then specify,
   plan and implement the Account Service (customers, accounts, tenants) together with the Auth

@@ -15,7 +15,7 @@ later.
 
 ## Decisions (GP-4)
 
-Resolves Q1, Q2, Q3, Q4, Q5, Q6 and Q16 (added during GP-4) of the original draft.
+Resolves Q1 to Q9 and Q16 (added during GP-4) of the original draft.
 
 1. **Customer is merged into Account.** Account is the customer, the billing container and the
    ownership boundary (billing info, plan, status). Split Customer out only if one buyer ever needs
@@ -40,6 +40,20 @@ Resolves Q1, Q2, Q3, Q4, Q5, Q6 and Q16 (added during GP-4) of the original draf
    tables). Account-level tables (`accounts`, `users`, `credentials`, `refresh_tokens`) are not
    tenant-scoped. `tenants` and `memberships` are read before a tenant is chosen, so they have no
    RLS and are queried explicitly by account or user. Provisional until the plan phase.
+10. **Auth approach** (Q7): build our own first (password hashing with argon2id or bcrypt, JWT,
+    refresh tokens) behind an interface for issuing and verifying tokens, so an external provider
+    such as Cognito can replace it later.
+11. **Token design** (Q8): access token is a short-lived JWT (about 15 minutes) signed with an
+    asymmetric key (EdDSA or RS256), with claims `sub`, `account_id`, `tenant_id` (tenant-scoped
+    tokens only), `roles`, `iat`, `exp`, `iss`, `aud`. Refresh token is an opaque random string
+    stored hashed in `refresh_tokens`, rotated on every use; reuse of an old one revokes the whole
+    token family. Two token types: account-scoped after login, tenant-scoped after selecting a
+    tenant (see decision 8). Only refresh tokens are revocable; access tokens expire, so role
+    changes take effect within the access token lifetime.
+12. **Authorization model** (Q9): simple RBAC with static roles defined in code, mapped to
+    permissions in a single Go file. Handlers check a permission (for example
+    `tenant.invite_user`), never a role name. Account-scope roles imply access to all tenants of the
+    account (decision 5).
 
 ## Core concepts
 
@@ -114,12 +128,13 @@ Q3 to Q6 are **resolved** (see "Decisions"); the original wording is kept for co
    all tenants without being a member of each.
 
 ### C. Authentication and authorization
-7. **Auth approach:** build our own (password hashing, JWT, refresh tokens) for learning, or use an
-   external provider later (for example Cognito, once we reach AWS)? Proposed: build our own first.
-8. **Token contents:** which claims (user id, account id, tenant id, roles)? Lifetime and refresh
-   strategy? Revocation?
-9. **Authorization model:** simple RBAC per tenant, or something richer (permissions, resource-level
-   rules)? Role scopes: platform, account, tenant.
+7. [RESOLVED] **Auth approach:** build our own (password hashing, JWT, refresh tokens) for learning,
+   or use an external provider later (for example Cognito, once we reach AWS)? Proposed: build our
+   own first.
+8. [RESOLVED] **Token contents:** which claims (user id, account id, tenant id, roles)? Lifetime and
+   refresh strategy? Revocation?
+9. [RESOLVED] **Authorization model:** simple RBAC per tenant, or something richer (permissions,
+   resource-level rules)? Role scopes: platform, account, tenant.
 
 ### D. Lifecycle and operations
 10. **Tenant lifecycle:** create, suspend, reactivate, delete; data retention and what "delete" means.

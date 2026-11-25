@@ -6,23 +6,29 @@ Statuses: `To Do`, `In Progress`, `In Review`, `Done`.
 
 | Key | Type | Summary | Status |
 |-----|------|---------|--------|
-| GP-4 | feat | Design and build Axioma Account and Auth service (spec-driven) | In Progress |
+| GP-4 | docs | Design and specify Axioma Account and Auth service (spec-driven) | In Progress |
 | GP-3 | docs | Draft Axioma Account Service foundations and open questions | Done |
 | GP-2 | chore | Close GP-1 in the ticket log | Done |
 | GP-1 | docs | Define branching, linear-history and PR workflow | Done |
 
-## GP-4: Design and build Axioma Account and Auth service
+## GP-4: Design and specify Axioma Account and Auth service
 
-- **Branch:** `feat/GP-4-account-auth-service`
+- **Branch:** `docs/GP-4-account-auth-design`
 - **Tier:** spec-driven (GitHub Spec Kit)
-- **Description:** Resolve the open questions in `docs/domain/axioma-account-service.md`, then specify,
-  plan and implement the Account Service (customers, accounts, tenants) together with the Auth
-  Service (users, tokens, roles) as one Go codebase with a logical separation. First real project
-  (Go, Fiber, PostgreSQL in Docker).
-- **Start of the new session:**
-  - Read `docs/domain/axioma-account-service.md`, `CLAUDE.md` and this file.
-  - Check how Spec Kit branch naming and `specs/` layout fit our branch and ticket rules.
-  - Walk through the open questions and record decisions.
+- **Description:** Resolve the open questions in `docs/domain/axioma-account-service.md`, then
+  specify and plan the Account Service (accounts, tenants, invitations) together with the Auth
+  Service (users, memberships, tokens, roles) as one Go codebase with a logical separation.
+  Design and spec only: **implementation is split into follow-up tickets** (GP-5 onward), created
+  from the Spec Kit task list so each slice is one branch and one PR.
+- **Scope change:** originally `feat` and included implementation. Narrowed to `docs` to keep the PR
+  reviewable (one ticket = one branch = one PR).
+- **Acceptance criteria:**
+  - All open questions in the domain doc are resolved or explicitly deferred.
+  - Spec Kit installed, and its branch naming and `specs/` layout reconciled with `CLAUDE.md`.
+  - Spec and plan written for the Account and Auth services.
+  - Implementation tickets created in `TICKETS.md`.
+- **Progress:** Q1 to Q9 and Q16 resolved. Remaining: Q10 to Q15 (lifecycle, Mexico-specific,
+  technical), then Spec Kit.
 
 ## GP-3: Draft Axioma Account Service foundations and open questions
 

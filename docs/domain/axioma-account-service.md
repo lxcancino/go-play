@@ -15,7 +15,7 @@ later.
 
 ## Decisions (GP-4)
 
-Resolves Q3, Q4, Q5, Q6 and Q16 (added during GP-4) of the original draft.
+Resolves Q1, Q2, Q3, Q4, Q5, Q6 and Q16 (added during GP-4) of the original draft.
 
 1. **Customer is merged into Account.** Account is the customer, the billing container and the
    ownership boundary (billing info, plan, status). Split Customer out only if one buyer ever needs
@@ -28,6 +28,18 @@ Resolves Q3, Q4, Q5, Q6 and Q16 (added during GP-4) of the original draft.
 5. **An account admin manages all tenants of the account** without a membership in each (Q6).
 6. **Naming and persistence conventions** (Q16): plain names namespaced by Go package; plural
    snake_case tables in per-module Postgres schemas.
+7. **Isolation strategy** (Q1): shared tables with a `tenant_id` column plus PostgreSQL Row-Level
+   Security. The app connects as a role that is not the table owner and has no `BYPASSRLS`; each
+   request sets `SET LOCAL app.tenant_id = ...` inside a transaction so pooled connections cannot
+   leak the setting.
+8. **Tenant resolution** (Q2): a tenant-scoped token (`tenant_id` claim) is the source of truth, and
+   the tenant id also appears in the path (`/v1/tenants/{tenant_id}/...`). Middleware rejects
+   requests where the two differ. Account-level calls (signup, `/v1/account`, tenant list) use an
+   account-scoped token with no tenant claim. Token lifetime and revocation stay in Q8.
+9. **RLS scope** (Q1): only tenant-scoped data carries `tenant_id` and RLS (future HR and payroll
+   tables). Account-level tables (`accounts`, `users`, `credentials`, `refresh_tokens`) are not
+   tenant-scoped. `tenants` and `memberships` are read before a tenant is chosen, so they have no
+   RLS and are queried explicitly by account or user. Provisional until the plan phase.
 
 ## Core concepts
 
@@ -84,10 +96,10 @@ detail for the plan phase).
 ## Open questions (to resolve in GP-4)
 
 ### A. Tenancy model
-1. **Data isolation strategy:** shared tables with a `tenant_id` column (optionally Postgres
+1. [RESOLVED] **Data isolation strategy:** shared tables with a `tenant_id` column (optionally Postgres
    Row-Level Security), schema-per-tenant, or database-per-tenant? Trade-offs: cost, isolation,
    migrations, noisy neighbours. Proposed starting point: shared schema + `tenant_id` + RLS.
-2. **Tenant resolution:** how does a request say which tenant it targets? Subdomain, path, header, or
+2. [RESOLVED] **Tenant resolution:** how does a request say which tenant it targets? Subdomain, path, header, or
    a claim inside the token?
 
 ### B. Identity and relationships

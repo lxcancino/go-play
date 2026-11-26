@@ -27,8 +27,18 @@ Statuses: `To Do`, `In Progress`, `In Review`, `Done`.
   - Spec Kit installed, and its branch naming and `specs/` layout reconciled with `CLAUDE.md`.
   - Spec and plan written for the Account and Auth services.
   - Implementation tickets created in `TICKETS.md`.
-- **Progress:** Q1 to Q12 and Q16 resolved. Remaining: Q13 to Q15 (Mexico-specific, technical),
-  then Spec Kit.
+- **Progress:** all questions (Q1 to Q16) resolved. Next: Spec Kit, spec and plan.
+- **Session log (2026-11-25):**
+  - Done: object model, tenancy, auth, lifecycle, audit, tenant identity, IDs and API style recorded
+    as decisions 1 to 18 in the domain doc.
+  - All decisions and this log are committed and pushed to the ticket branch.
+  - No PR opened yet. No code written and Spec Kit not installed.
+- **Resume here:**
+  1. Confirm the modular monolith ("Service boundary", still *Proposed*; recommended as decision 19).
+  2. Update the stale status banner and the "Open questions (to resolve in GP-4)" heading.
+  3. Check the current Spec Kit version, its branch naming and `specs/` layout; show the result
+     before installing it in the repo.
+  4. Write the spec and plan (set demo plan limit values there), then create GP-5 onward.
 
 ## GP-3: Draft Axioma Account Service foundations and open questions
 

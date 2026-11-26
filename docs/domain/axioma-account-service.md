@@ -15,7 +15,7 @@ later.
 
 ## Decisions (GP-4)
 
-Resolves Q1 to Q12 and Q16 (added during GP-4) of the original draft.
+Resolves Q1 to Q15 of the original draft, plus Q16 (added during GP-4).
 
 1. **Customer is merged into Account.** Account is the customer, the billing container and the
    ownership boundary (billing info, plan, status). Split Customer out only if one buyer ever needs
@@ -69,13 +69,26 @@ Resolves Q1 to Q12 and Q16 (added during GP-4) of the original draft.
     JSON `metadata`), written in the same transaction as the change. Records signup, login success
     and failure, tenant lifecycle, invitations, membership and role changes, and refresh token
     reuse. Never stores secrets. No RLS; queried explicitly by `account_id` (confirm in the plan).
+16. **Tenant identity** (Q13): one tenant is one company; an account with several companies has
+    several tenants, each of which will carry its own RFC. For now the tenant holds only `name`.
+    `legal_name` (razón social), `rfc`, régimen fiscal, fiscal address and employer registrations
+    arrive with the HR and payroll domain. A workspace holding many companies was rejected: it adds
+    a level and RLS would not separate the companies.
+17. **IDs** (Q14): UUIDv7 generated in Go (`github.com/google/uuid`), stored as PostgreSQL `uuid`.
+    Time-ordered for index locality and does not expose record counts; it does reveal creation time.
+    IDs are not secrets: invitation and refresh tokens are separate random values.
+18. **API style** (Q15): REST with JSON using Fiber (version pinned in the plan), `/v1` path prefix,
+    RFC 9457 Problem Details errors with a stable `code`, `snake_case` fields, plural resource names,
+    RFC 3339 UTC timestamps and an OpenAPI document. Additive changes do not create a new version.
+    Fiber stays inside the HTTP layer (it reuses request memory, so retained values must be copied);
+    business packages see only `context.Context` and plain types.
 
 ## Core concepts
 
 | Concept | Meaning |
 |---|---|
 | **Account** | Root entity: the customer, billing information, plan and status (`demo`, `active`, `suspended`). Similar to an AWS Account. |
-| **Tenant** | An isolated HR and payroll workspace (an employer). Belongs to exactly one Account. The unit of data isolation. |
+| **Tenant** | An isolated HR and payroll workspace for exactly one company (employer). Belongs to exactly one Account. The unit of data isolation. |
 | **User** | A person who authenticates. Global identity keyed by unique email. |
 | **Membership** | User + scope (account or tenant) + role. The only place permissions are granted. |
 | **Credential** | The user's password hash, separate from User so other login methods can be added later. |
@@ -158,10 +171,10 @@ Q3 to Q6 are **resolved** (see "Decisions"); the original wording is kept for co
 12. [RESOLVED] **Audit trail:** who did what, per tenant. Needed from the start?
 
 ### E. Mexico-specific and technical
-13. **Tenant legal identity:** which employer data lives on the tenant (razón social, RFC, régimen
+13. [RESOLVED] **Tenant legal identity:** which employer data lives on the tenant (razón social, RFC, régimen
     fiscal)? Or is that later HR-domain data?
-14. **IDs:** UUID (v7?) versus sequential; how they appear in URLs.
-15. **API style and framework:** REST with Fiber first (as planned); versioning; error format.
+14. [RESOLVED] **IDs:** UUID (v7?) versus sequential; how they appear in URLs.
+15. [RESOLVED] **API style and framework:** REST with Fiber first (as planned); versioning; error format.
 16. [RESOLVED] **Naming and persistence conventions:** plain domain names or a product prefix
     (`AxAccount`)? Decision: plain names in Go (`account.Account`, `tenant.Tenant`, `auth.User`),
     namespaced by package, because a prefix stutters (`account.AxAccount`). Library collisions are

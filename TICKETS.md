@@ -27,8 +27,8 @@ Statuses: `To Do`, `In Progress`, `In Review`, `Done`.
   - Spec Kit installed, and its branch naming and `specs/` layout reconciled with `CLAUDE.md`.
   - Spec and plan written for the Account and Auth services.
   - Implementation tickets created in `TICKETS.md`.
-- **Progress:** Q1 to Q9 and Q16 resolved. Remaining: Q10 to Q15 (lifecycle, Mexico-specific,
-  technical), then Spec Kit.
+- **Progress:** Q1 to Q12 and Q16 resolved. Remaining: Q13 to Q15 (Mexico-specific, technical),
+  then Spec Kit.
 
 ## GP-3: Draft Axioma Account Service foundations and open questions
 

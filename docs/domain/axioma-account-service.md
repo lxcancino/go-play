@@ -15,7 +15,7 @@ later.
 
 ## Decisions (GP-4)
 
-Resolves Q1 to Q9 and Q16 (added during GP-4) of the original draft.
+Resolves Q1 to Q12 and Q16 (added during GP-4) of the original draft.
 
 1. **Customer is merged into Account.** Account is the customer, the billing container and the
    ownership boundary (billing info, plan, status). Split Customer out only if one buyer ever needs
@@ -54,6 +54,21 @@ Resolves Q1 to Q9 and Q16 (added during GP-4) of the original draft.
     permissions in a single Go file. Handlers check a permission (for example
     `tenant.invite_user`), never a role name. Account-scope roles imply access to all tenants of the
     account (decision 5).
+13. **Tenant lifecycle** (Q10): states `active`, `suspended` and `pending_deletion`. Suspended
+    tenants keep their data but get no tenant-scoped tokens, and reads and writes are refused.
+    Delete is a soft delete to `pending_deletion`, restorable for 30 days (placeholder), then a purge
+    job hard-deletes. A suspended account suspends its tenants, derived from account status rather
+    than written to each tenant. Legal retention periods for payroll data belong to the HR domain.
+    Demo-account expiry is noted but not built.
+14. **Plan limits** (Q11): `plan` is a field on Account and the limits live in code, enforced at
+    creation time by a single application-level check (for example `CheckLimit`), not in the
+    database or handlers. Only tenant and user limits for demo accounts for now (values to be set
+    in the spec). Employee limits belong to the HR domain.
+15. **Audit trail** (Q12): minimal append-only `audit_events` table (`id`, `occurred_at`,
+    `account_id`, nullable `tenant_id`, `actor_user_id`, `action`, `target_type`, `target_id`,
+    JSON `metadata`), written in the same transaction as the change. Records signup, login success
+    and failure, tenant lifecycle, invitations, membership and role changes, and refresh token
+    reuse. Never stores secrets. No RLS; queried explicitly by `account_id` (confirm in the plan).
 
 ## Core concepts
 
@@ -66,7 +81,7 @@ Resolves Q1 to Q9 and Q16 (added during GP-4) of the original draft.
 | **Credential** | The user's password hash, separate from User so other login methods can be added later. |
 | **RefreshToken** | A session that can be revoked (logout, revocation). |
 | **Invitation** | How the owner adds a user: an email invite carrying scope and role. The invitee sets their own password. |
-| **AuditEvent** | Who did what, per tenant. Optional at first (Q12). |
+| **AuditEvent** | Who did what, per account and tenant. Append-only, from the start (decision 15). |
 
 ### Roles (static, defined in code at first)
 
@@ -137,10 +152,10 @@ Q3 to Q6 are **resolved** (see "Decisions"); the original wording is kept for co
    resource-level rules)? Role scopes: platform, account, tenant.
 
 ### D. Lifecycle and operations
-10. **Tenant lifecycle:** create, suspend, reactivate, delete; data retention and what "delete" means.
-11. **Subscription effects:** do plans impose limits (number of tenants, users, employees)? Where are
+10. [RESOLVED] **Tenant lifecycle:** create, suspend, reactivate, delete; data retention and what "delete" means.
+11. [RESOLVED] **Subscription effects:** do plans impose limits (number of tenants, users, employees)? Where are
     they enforced?
-12. **Audit trail:** who did what, per tenant. Needed from the start?
+12. [RESOLVED] **Audit trail:** who did what, per tenant. Needed from the start?
 
 ### E. Mexico-specific and technical
 13. **Tenant legal identity:** which employer data lives on the tenant (razón social, RFC, régimen
